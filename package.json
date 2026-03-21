@@ -1,0 +1,15 @@
+{
+  "name": "cam-on",
+  "version": "1.0.0",
+  "description": "CAM-ON Camera Access Tool",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Cyber With Suraj",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
+  }
+}
